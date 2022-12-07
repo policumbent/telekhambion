@@ -12,20 +12,20 @@
 #define DEBUG 1
 
 /*
- *  7: CE (chip enable)
- *  8: CSN
+ *  0: CE (chip enable)
+ *  15: CSN
  */
-RF24 radio(7,8);
+RF24 radio(2, 15);
 const byte address[6] = "00001";
 
 uint8_t data = 0;
 
 /*
- *  l_su: led shift up
- *  l_sd: led shift down
- *  r_tx: led radio transmission
+ *  l_su: pin for shift up led
+ *  l_sd: pin for shift down led
+ *  r_tx: pin for radio transmission led
  */
-uint8_t l_su = 2, l_sd = 3, r_tx = 4;
+uint8_t l_su = 16, l_sd = 5, r_tx = 4;
 
 uint8_t radio_status = 0;
 
