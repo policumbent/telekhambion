@@ -35,5 +35,5 @@ class Controller {
          *  returns the corresponding payload to the current pressed-button
          *  configuration
          */
-        uint8_t get_payload();
+        uint8_t encode_payload();
 };
