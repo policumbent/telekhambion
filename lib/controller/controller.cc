@@ -10,7 +10,7 @@ Controller::Controller(uint8_t us_bp, uint8_t ds_bp, uint8_t rd_bp) {
     pinMode(radio_pin, INPUT);
 }
 
-uint8_t Controller::get_payload() {
+uint8_t Controller::encode_payload() {
     uint8_t shift_up = digitalRead(upshift_pin);
     uint8_t shift_down = digitalRead(downshift_pin);
     uint8_t radio_tx = digitalRead(radio_pin);

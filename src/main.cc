@@ -42,7 +42,7 @@ void setup() {
 void loop() {
   status = 0;
 
-  payload = controller.get_payload();
+  payload = controller.encode_payload();
   status = nrf.write(&payload, sizeof(payload));
 
   #if DEBUG
