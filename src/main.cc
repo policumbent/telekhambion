@@ -7,41 +7,43 @@
 
 #define DEBUG 1
 
-/*
- *  7: CE (chip enable)
- *  8: CSN (chip select)
- */
-RF24 radio(7,8);
-const byte address[6] = "00001";
-
 #define US_PB 2  // shift up pin button
 #define DS_PB 3  // shift down pin button
 #define RD_PB 4  // radio pin button
 
-Controller controller(US_PB, DS_PB, RD_PB);
-
 /*
- *  payload: identifies the payload to be sent
- *  status: value of return of the radio.write(), 1 if ACK returned, 0 otherwise
+ *  nrf identifies the nRF24L01 object
+ *  
+ *  Attributes:
+ *    - 7: CE (chip enable)
+ *    - 8: CSN (chip select)
  */
-uint8_t payload = 0, status = 0;
+RF24 nrf(7, 8);
+const byte address[6] = "00001";
+
+Controller controller(US_PB, DS_PB, RD_PB);   // controller object
+
+/*  identifies the payload to be sent */
+uint8_t payload = 0;
+
+/*  radio.write() return value: 1 if ACK returned; 0 otherwise */
+uint8_t status = 0;
 
 void setup() {
   Serial.begin(9600);
 
   // nRF24 init
-  radio.begin();
-  radio.openWritingPipe(address);
-  radio.setPALevel(RF24_PA_MIN);
-  radio.stopListening();
+  nrf.begin();
+  nrf.openWritingPipe(address);
+  nrf.setPALevel(RF24_PA_MIN);
+  nrf.stopListening();
 }
-
 
 void loop() {
   status = 0;
 
   payload = controller.get_payload();
-  status = radio.write(&payload, sizeof(payload));
+  status = nrf.write(&payload, sizeof(payload));
 
   #if DEBUG
     Serial.print((status)?
