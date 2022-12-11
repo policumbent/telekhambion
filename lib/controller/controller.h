@@ -6,6 +6,7 @@
 #define DOWN_SHIFT_SIG  1       // signal mapped to down-shift led
 #define RADIO_SIG       64      // signal mapped to radio transmission led
 
+/*  Class for the remote controller */
 class Controller {
     private:
         /*  pin used for the shift up button (HIGH -> perform upshift) */ 

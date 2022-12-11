@@ -21,7 +21,8 @@
 RF24 nrf(7, 8);
 const byte address[6] = "00001";
 
-Controller controller(US_PB, DS_PB, RD_PB);   // controller object
+/*  Controller object */
+Controller controller(US_PB, DS_PB, RD_PB);
 
 /*  identifies the payload to be sent */
 uint8_t payload = 0;
