@@ -19,7 +19,8 @@
  *    - 8: CSN (chip select)
  */
 RF24 nrf(7, 8);
-const byte address[6] = "00001";
+const byte address[][6] = {"00001","00010"};
+
 
 /*  Controller object */
 Controller controller(US_PB, DS_PB, RD_PB);
@@ -33,22 +34,32 @@ uint8_t status = 0;
 void setup() {
   Serial.begin(9600);
 
-  // nRF24 init
+  // nRF24 init (Shift)
   nrf.begin();
-  nrf.openWritingPipe(address);
   nrf.setPALevel(RF24_PA_MIN);
   nrf.stopListening();
 }
 
 void loop() {
   status = 0;
-
   payload = controller.encode_payload();
+  
+
+  nrf.openWritingPipe(address[0]);
   status = nrf.write(&payload, sizeof(payload));
 
   #if DEBUG
     Serial.print((status)?
-                  "Message received correctly\n":"Message not received\n");
+                  "Message (shift) received correctly\n":"Message (shift) not received\n");
+    Serial.println(payload);
+  #endif
+
+  nrf.openWritingPipe(address[1]);
+  status = nrf.write(&payload, sizeof(payload));
+
+  #if DEBUG
+    Serial.print((status)?
+                  "Message (radio) received correctly\n":"Message not received\n");
     Serial.println(payload);
   #endif
 }
