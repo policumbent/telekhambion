@@ -11,10 +11,8 @@ class Controller {
     private:
         /*  pin used for the shift up button (HIGH -> perform upshift) */ 
         uint8_t upshift_pin;
-        
         /*  pin used for the shift down button (HIGH -> perform downshift) */
         uint8_t downshift_pin;
-
         /* 
          *  pin used for the radio communication button (HIGH -> keep radio on; 
          *  LOW -> turn off radio)
@@ -31,7 +29,6 @@ class Controller {
          *      - rd_bp: radio button pin
          */
         Controller(uint8_t us_bp, uint8_t ds_bp, uint8_t rd_bp);
-
         /*
          *  returns the corresponding payload to the current pressed-button
          *  configuration

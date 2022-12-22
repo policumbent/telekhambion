@@ -51,9 +51,8 @@ void loop() {
   status = nrf.write(&payload, sizeof(payload));
 
   #if DEBUG
-    Serial.print((status)?
-                  "Message (gearbox) received correctly\n":
-                  "Message (gearbox) not received\n");
+    Serial.print((status) ? "Message (gearbox) received correctly\n" :
+                            "Message (gearbox) not received\n");
     Serial.println(payload);
   #endif
 
@@ -62,9 +61,8 @@ void loop() {
   status = nrf.write(&payload, sizeof(payload));
 
   #if DEBUG
-    Serial.print((status)?
-                  "Message (radio) received correctly\n":
-                  "Message (radio) not received\n");
+    Serial.print((status) ? "Message (radio) received correctly\n" :
+                            "Message (radio) not received\n");
     Serial.println(payload);
   #endif
 }
