@@ -15,7 +15,7 @@ uint8_t Controller::encode_payload() {
     uint8_t shift_down = digitalRead(downshift_pin);
     uint8_t radio_tx = digitalRead(radio_pin);
 
-    uint8_t payload = shift_up * UP_SHIFT_SIG + shift_down * DOWN_SHIFT_SIG +
+    uint8_t payload = shift_up * UP_SHIFT_SIG | shift_down * DOWN_SHIFT_SIG |
                       radio_tx * RADIO_SIG;
 
     return payload;
