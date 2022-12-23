@@ -11,4 +11,7 @@ transmitter part of the remote control system for Cerberus' gearbox.
 
 ---
 
-[Receiver repository](https://github.com/policumbent/rx-cerberus-test)
+## Correlated repositories
+
+- [Greta repository](https://github.com/policumbent/greta)
+- [Aurora repository](https://github.com/policumbent/aurora)
