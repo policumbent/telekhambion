@@ -5,7 +5,7 @@ transmitter part of the remote control system for Cerberus' gearbox.
 
 ## Material used
 
-- Microcontroller board: Arduino UNO
+- Microcontroller board: STM32 NUCLEO-L031K6
 - RF module: nRF24L01
 - Buttons
 
