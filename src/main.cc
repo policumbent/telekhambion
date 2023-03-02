@@ -7,18 +7,18 @@
 
 #define DEBUG 1
 
-#define US_PB 2  // shift up pin button
-#define DS_PB 3  // shift down pin button
-#define RD_PB 4  // radio pin button
+#define US_PB PA12  // shift up pin button
+#define DS_PB PB0  // shift down pin button
+#define RD_PB PB7  // radio pin button
 
 /*
  * nrf identifies the nRF24L01 object
  * 
  * Attributes:
- *   - 7: CE (chip enable)
- *   - 8: CSN (chip select)
+ *   - PB6: CE (chip enable)
+ *   - PB1: CSN (chip select)
  */
-RF24 nrf(7, 8);
+RF24 nrf(PB6, PB1);
 /*
  * identifies the addresses to which the controller will send the payloads:
  *     - 00001: gearbox address
@@ -40,6 +40,13 @@ void setup() {
   nrf.begin();
   nrf.setPALevel(RF24_PA_MIN);
   nrf.stopListening();
+
+  // check nRF24 connection
+  #if DEBUG
+    Serial.print(nrf.isChipConnected()? "nRF connected\n" :
+                                        "nRF error\n");
+  #endif
+
 }
 
 void loop() {
