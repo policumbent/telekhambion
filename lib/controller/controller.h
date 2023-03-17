@@ -2,13 +2,10 @@
 
 #include <Arduino.h>
 
-#define UP_SHIFT_SIG    128     // signal mapped to up-shift led
-#define DOWN_SHIFT_SIG  1       // signal mapped to down-shift led
-#define RADIO_SIG       64      // signal mapped to radio transmission led
-
-#define UP_SHIFT_MSK    7
-#define DOWN_SHIFT_MSK  0
-#define RADIO_MSK       6
+#define UP_SHIFT_MSK    7       // shift for the mask mapped to up-shift led
+#define DOWN_SHIFT_MSK  0       // shift for the mask mapped to down-shift led
+#define RADIO_MSK       6       // shift for the mask mapped to radio 
+                                //     transmission led
 
 /*  Class for the remote controller */
 class Controller {
