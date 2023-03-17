@@ -6,6 +6,10 @@
 #define DOWN_SHIFT_SIG  1       // signal mapped to down-shift led
 #define RADIO_SIG       64      // signal mapped to radio transmission led
 
+#define UP_SHIFT_MSK    7
+#define DOWN_SHIFT_MSK  0
+#define RADIO_MSK       6
+
 /*  Class for the remote controller */
 class Controller {
     private:
