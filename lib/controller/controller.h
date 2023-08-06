@@ -22,12 +22,11 @@ class Controller {
 
     public:
         /* 
-         *  creates a Controller object and initialize its pins
+         * creates a Controller object and initialize its pins
          *
-         *  attributes:
-         *      - us_bp: upshift button pin
-         *      - ds_bp: downshift button pin
-         *      - rd_bp: radio button pin
+         * @param us_bp upshift button pin
+         * @param ds_bp downshift button pin
+         * @param rd_bp radio button pin
          */
         Controller(uint8_t us_bp, uint8_t ds_bp, uint8_t rd_bp);
         /*
