@@ -5,9 +5,9 @@ Controller::Controller(uint8_t us_bp, uint8_t ds_bp, uint8_t rd_bp) {
     downshift_pin = ds_bp;
     radio_pin = rd_bp;
 
-    pinMode(upshift_pin, INPUT_PULLDOWN);
-    pinMode(downshift_pin, INPUT_PULLDOWN);
-    pinMode(radio_pin, INPUT_PULLDOWN);
+    pinMode(upshift_pin, INPUT_PULLUP);
+    pinMode(downshift_pin, INPUT_PULLUP);
+    pinMode(radio_pin, INPUT_PULLUP);
 }
 
 uint8_t Controller::encode_payload() {
