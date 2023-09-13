@@ -7,9 +7,9 @@
 
 #define DEBUG 0
 
-#define US_PB PB0   // shift up pin button
-#define DS_PB PA12  // shift down pin button
-#define RD_PB PB7   // radio pin button
+#define US_PB PA12   // shift up pin button
+#define DS_PB PB0    // shift down pin button
+#define RD_PB PB7    // radio pin button
 
 /*
  * nrf identifies the nRF24L01 object
