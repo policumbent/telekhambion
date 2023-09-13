@@ -7,8 +7,8 @@
 
 #define DEBUG 0
 
-#define US_PB PB0  // shift up pin button
-#define DS_PB PA12   // shift down pin button
+#define US_PB PB0   // shift up pin button
+#define DS_PB PA12  // shift down pin button
 #define RD_PB PB7   // radio pin button
 
 /*
@@ -24,7 +24,7 @@ RF24 nrf(PB6, PB1);
  *     - 00001: gearbox address
  *     - 00010: radio address
  */
-const byte address[][6] = {"00001","00010"};
+const byte address[][6] = {"00001"};
 
 Controller controller(US_PB, DS_PB, RD_PB);
 
@@ -34,7 +34,9 @@ uint8_t payload = 0;
 uint8_t status = 0;
 
 void setup() {
-  Serial.begin(9600);
+  #if DEBUG
+    Serial.begin(115200);
+  #endif
 
   // nRF24 init (Shift)
   nrf.begin();
@@ -58,18 +60,8 @@ void loop() {
   status = nrf.write(&payload, sizeof(payload));
 
   #if DEBUG
-    Serial.print((status) ? "Message (gearbox) received correctly\n" :
-                            "Message (gearbox) not received\n");
-    Serial.println(payload);
-  #endif
-
-  // opens pipe for radio communciation and sends the message
-  nrf.openWritingPipe(address[1]);
-  status = nrf.write(&payload, sizeof(payload));
-
-  #if DEBUG
-    Serial.print((status) ? "Message (radio) received correctly\n" :
-                            "Message (radio) not received\n");
+    Serial.print((status) ? "Message received correctly\n" :
+                            "Message not received\n");
     Serial.println(payload);
   #endif
 }
