@@ -1,0 +1,2 @@
+flash command:
+openocd -f openocd.config -c "program ./build/telekhambion.elf verify reset exit"
