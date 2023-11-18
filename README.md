@@ -1,39 +1,31 @@
 # Telekhambion
 
-This repository is used for the testing of the nRF24L01+ module for the
-transmitter part of the remote control system for Cerberus' gearbox.
+This repository is the firmware for the transmitter 
+part of the remote control system for Cerberus' gearbox.
 
-It is written using Platformio and the Arduino framework.
+It is written using ST framework.
 
 ## Boards
 
 - MCU: STM32 NUCLEO-L031K6
 - RF module: nRF24L01+
 
-## MCU Pinout
-
-The pinout is written following the schema:
-```
-ST_PinName (Arduino_PinName): function
-```
-
-We include two names for the pins because the Nucleo boards are
-Arduino-compatible and the name written on the board itself is different from
-the real name of the pin that one can find on the MCU datasheet.
-
 ### Buttons
 
-- PA12 (D2): upshift pin, defined as US_PB
-- PB0 (D3): downshift pin, defined as DS_PB
-- PB7 (D4): radio pin, defined as RD_PB
+- PA12 : upshift pin, defined as B_UPSHIFT
+- PB0 : downshift pin, defined as B_DOWNSHIFT
+- PB7 : radio pin, defined as B_RADIO
 
 ### nRF24L01+ and SPI connections
 
-- PB6 (D5): chip enable
-- PB1 (D6): chip select
-- PB3 (D13): serial clock
-- PB5 (D11): MOSI
-- PB4 (D12): MISO
+- PA2 : nrf24l01+ chip enable
+- PA1 : spi chip select
+- PA5 : spi serial clock
+- PA7 : spi MOSI
+- PA6 : spi MISO
+
+### Build and Flash
+The project uses the extension ```stm32-for-vscode``` for building and flashing.
 
 ---
 
