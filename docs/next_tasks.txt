@@ -1,0 +1,5 @@
+-separare trasmissione da debouncing settando periodo di trasmissione
+-rendere leggibile macchina a stati di button_debouncing()
+-dimensionare i periodi in base a sensibilita' voluta e debouncing bottoni bici
+-implementare lettura batteria
+-implementare combinazione bottoni per idle 

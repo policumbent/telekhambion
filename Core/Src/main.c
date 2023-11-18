@@ -86,12 +86,10 @@ void nRF24_SendPayload(uint8_t* data, uint8_t len) {
     //Set CE pin low in order to force nRF state in Standby-I
     nRF24_CE_L();
 
-    //print_fifo_status(nRF24_GetStatus_TXFIFO());
     
     //Write data on nRF24 register
     nRF24_WritePayload(data, len);
 
-    //print_fifo_status(nRF24_GetStatus_TXFIFO());
     
     //Set CE Pin High in order to trigger the transmission
     nRF24_CE_H();
@@ -99,26 +97,26 @@ void nRF24_SendPayload(uint8_t* data, uint8_t len) {
     //Wait for empy fifo
     do{
       flag=nRF24_GetStatus_TXFIFO();
-      //print_fifo_status(flag);
-      //HAL_Delay(500);
+      
     }while((flag != nRF24_STATUS_RXFIFO_EMPTY));
 
     //Set CE Low 
     nRF24_CE_L();
     
-    //print_fifo_status(nRF24_GetStatus_TXFIFO());
-
     return;
 }
 
-uint8_t button_decode(){
-  uint8_t ds_status, us_status, radio_status, payload;
-  ds_status = HAL_GPIO_ReadPin(B_DOWNSHIFT_GPIO_Port, B_DOWNSHIFT_Pin);
-  us_status = HAL_GPIO_ReadPin(B_UPSHIFT_GPIO_Port, B_UPSHIFT_Pin);
-  radio_status = HAL_GPIO_ReadPin(B_RADIO_GPIO_Port, B_RADIO_Pin);
+void button_debouncing(Button *button){
+  button->current = HAL_GPIO_ReadPin(button->GPIO_Port, button->GPIO_Pin);
 
-  payload = (ds_status << SHIFT_DS) | (us_status << SHIFT_US) | (radio_status << SHIFT_RADIO);
-  return payload;
+  if(button->previous != button->current){
+    button->toggled = 1;
+    button->previous = button->current;
+  }
+  else if(button->toggled){
+    button->toggled = 0;
+    button->debounced_value = button->previous;
+  }
 }
 
 /* USER CODE END 0 */
@@ -161,19 +159,18 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 
   const uint8_t TX_Address[]={0xBB,0xBB,0xBB,0xBB,0xBB};
-  //char check[]="valid check\r\n";
-  //uint8_t not_check[]="not valid check\r\n";
+  
 
   /*NRF24 SETUP*/
   HAL_Delay(100);
   nRF24_Init();
-  HAL_Delay(1000);
+  HAL_Delay(100);
   while(nRF24_Check() == 0){
     HAL_UART_Transmit(&huart2,(uint8_t*) "invalid\r\n",sizeof("invalid\r\n"),500);
     HAL_Delay(1000);
   }
   
-  HAL_UART_Transmit(&huart2,(uint8_t*) "valid\r\n",sizeof("valid\r\n"),500);
+  HAL_UART_Transmit(&huart2,(uint8_t*) "NRF connected\r\n",sizeof("NRF connected\r\n"),500);
 
 
   nRF24_SetOperationalMode(nRF24_MODE_TX);
@@ -191,25 +188,65 @@ int main(void)
   nRF24_SetPowerMode(nRF24_PWR_UP);
   HAL_Delay(500);
   
-  //uint8_t stringa[]="barimerda\r\n";
   nRF24_FlushTX();
     
-  uint8_t buf[8];
+  uint8_t buf[35];
   uint8_t payload=0;
+  uint32_t ms_old = HAL_GetTick();
+  uint32_t ms_now;
+  Button b_upshift;
+  Button b_downshift;
+  Button b_radio;
 
-  HAL_Delay(3000);
+  //Buttons initialization
+  b_downshift.previous = 0;
+  b_downshift.current = 0;
+  b_downshift.toggled = 0;
+  b_downshift.debounced_value = 0;
+  b_downshift.GPIO_Port = B_DOWNSHIFT_GPIO_Port;
+  b_downshift.GPIO_Pin = B_DOWNSHIFT_Pin;
+
+  b_upshift.previous = 0;
+  b_upshift.current = 0;
+  b_upshift.toggled = 0;
+  b_upshift.debounced_value = 0;
+  b_upshift.GPIO_Port = B_UPSHIFT_GPIO_Port;
+  b_upshift.GPIO_Pin = B_UPSHIFT_Pin;
+
+  b_radio.previous = 0;
+  b_radio.current = 0;
+  b_radio.toggled = 0;
+  b_radio.debounced_value = 0;
+  b_radio.GPIO_Port = B_RADIO_GPIO_Port;
+  b_radio.GPIO_Pin = B_RADIO_Pin;
+
+  HAL_Delay(1000);
 
   while (1)
   { 
-    payload = button_decode();
-    HAL_UART_Transmit(&huart2, (uint8_t*) "----------\r\n", sizeof("----------\r\n"), 100);
-    sprintf((char *)buf, "%u\r\n", payload);
+    ms_now = HAL_GetTick();
+    if(ms_now - ms_old >= DEBOUNCING_PERIOD){
+      //DEBOUNCING
+      button_debouncing(&b_upshift);
+      button_debouncing(&b_downshift);
+      button_debouncing(&b_radio);
+
+      payload = (b_downshift.debounced_value << SHIFT_DS) |
+                (b_upshift.debounced_value << SHIFT_US) |
+                (b_radio.debounced_value << SHIFT_RADIO);
+    
+
+    sprintf((char *)buf, "US:%u DS:%u RD:%u Payload:%u\r\n",
+            b_upshift.debounced_value,
+            b_downshift.debounced_value,
+            b_radio.debounced_value,
+            payload);
+    
     HAL_UART_Transmit(&huart2, buf, strlen((char*)buf), 100);
     nRF24_SendPayload((uint8_t*) &payload, sizeof(payload));
-
-    print_fifo_status(nRF24_GetStatus_TXFIFO());
+    ms_old=ms_now;
+    }
     
-    HAL_Delay(500);
 
     /* USER CODE END WHILE */
 
