@@ -43,6 +43,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+ADC_HandleTypeDef hadc;
+
 SPI_HandleTypeDef hspi1;
 
 UART_HandleTypeDef huart2;
@@ -56,6 +58,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_SPI1_Init(void);
+static void MX_ADC_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -86,12 +89,10 @@ void nRF24_SendPayload(uint8_t* data, uint8_t len) {
     //Set CE pin low in order to force nRF state in Standby-I
     nRF24_CE_L();
 
-    //print_fifo_status(nRF24_GetStatus_TXFIFO());
     
     //Write data on nRF24 register
     nRF24_WritePayload(data, len);
 
-    //print_fifo_status(nRF24_GetStatus_TXFIFO());
     
     //Set CE Pin High in order to trigger the transmission
     nRF24_CE_H();
@@ -99,26 +100,26 @@ void nRF24_SendPayload(uint8_t* data, uint8_t len) {
     //Wait for empy fifo
     do{
       flag=nRF24_GetStatus_TXFIFO();
-      //print_fifo_status(flag);
-      //HAL_Delay(500);
+      
     }while((flag != nRF24_STATUS_RXFIFO_EMPTY));
 
     //Set CE Low 
     nRF24_CE_L();
     
-    //print_fifo_status(nRF24_GetStatus_TXFIFO());
-
     return;
 }
 
-uint8_t button_decode(){
-  uint8_t ds_status, us_status, radio_status, payload;
-  ds_status = HAL_GPIO_ReadPin(B_DOWNSHIFT_GPIO_Port, B_DOWNSHIFT_Pin);
-  us_status = HAL_GPIO_ReadPin(B_UPSHIFT_GPIO_Port, B_UPSHIFT_Pin);
-  radio_status = HAL_GPIO_ReadPin(B_RADIO_GPIO_Port, B_RADIO_Pin);
+void button_debouncing(Button *button){
+  button->current = HAL_GPIO_ReadPin(button->GPIO_Port, button->GPIO_Pin);
 
-  payload = (ds_status << 7) | (us_status << 4) | (radio_status << 0);
-  return payload;
+  if(button->previous != button->current){
+    button->toggled = 1;
+    button->previous = button->current;
+  }
+  else if(button->toggled){
+    button->toggled = 0;
+    button->debounced_value = button->previous;
+  }
 }
 
 /* USER CODE END 0 */
@@ -153,33 +154,33 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   MX_SPI1_Init();
+  MX_ADC_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_ADC_Start(&hadc);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
   const uint8_t TX_Address[]={0xBB,0xBB,0xBB,0xBB,0xBB};
-  //char check[]="valid check\r\n";
-  //uint8_t not_check[]="not valid check\r\n";
+  
 
   /*NRF24 SETUP*/
   HAL_Delay(100);
   nRF24_Init();
-  HAL_Delay(1000);
+  HAL_Delay(100);
   while(nRF24_Check() == 0){
     HAL_UART_Transmit(&huart2,(uint8_t*) "invalid\r\n",sizeof("invalid\r\n"),500);
     HAL_Delay(1000);
   }
   
-  HAL_UART_Transmit(&huart2,(uint8_t*) "valid\r\n",sizeof("valid\r\n"),500);
+  HAL_UART_Transmit(&huart2,(uint8_t*) "NRF connected\r\n",sizeof("NRF connected\r\n"),500);
 
 
   nRF24_SetOperationalMode(nRF24_MODE_TX);
   nRF24_SetRFChannel(0);
   nRF24_SetTXPower(nRF24_TXPWR_18dBm);
-  nRF24_SetDataRate(nRF24_DR_250kbps);
+  nRF24_SetDataRate(nRF24_DR_1Mbps);
   nRF24_SetAddrWidth(5);
   nRF24_SetAddr(6, TX_Address);
   nRF24_SetAddr(0, TX_Address);
@@ -191,25 +192,84 @@ int main(void)
   nRF24_SetPowerMode(nRF24_PWR_UP);
   HAL_Delay(500);
   
-  //uint8_t stringa[]="barimerda\r\n";
   nRF24_FlushTX();
     
-  uint8_t buf[8];
+  uint8_t buf[40];
   uint8_t payload=0;
+  uint32_t ms_old_deb = HAL_GetTick();
+  uint32_t ms_now_deb;
+  uint32_t ms_old_adc = HAL_GetTick();
+  uint32_t ms_now_adc;
+  Button b_upshift;
+  Button b_downshift;
+  Button b_radio;
 
-  HAL_Delay(3000);
+  uint16_t raw_data;
+
+  float voltage;
+
+  //Buttons initialization
+  b_downshift.previous = 0;
+  b_downshift.current = 0;
+  b_downshift.toggled = 0;
+  b_downshift.debounced_value = 0;
+  b_downshift.GPIO_Port = B_DOWNSHIFT_GPIO_Port;
+  b_downshift.GPIO_Pin = B_DOWNSHIFT_Pin;
+
+  b_upshift.previous = 0;
+  b_upshift.current = 0;
+  b_upshift.toggled = 0;
+  b_upshift.debounced_value = 0;
+  b_upshift.GPIO_Port = B_UPSHIFT_GPIO_Port;
+  b_upshift.GPIO_Pin = B_UPSHIFT_Pin;
+
+  b_radio.previous = 0;
+  b_radio.current = 0;
+  b_radio.toggled = 0;
+  b_radio.debounced_value = 0;
+  b_radio.GPIO_Port = B_RADIO_GPIO_Port;
+  b_radio.GPIO_Pin = B_RADIO_Pin;
+
+  HAL_Delay(1000);
 
   while (1)
   { 
-    payload = button_decode();
-    HAL_UART_Transmit(&huart2, (uint8_t*) "----------\r\n", sizeof("----------\r\n"), 100);
-    sprintf((char *)buf, "%u\r\n", payload);
-    HAL_UART_Transmit(&huart2, buf, strlen((char*)buf), 100);
-    nRF24_SendPayload((uint8_t*) &payload, sizeof(payload));
+    ms_now_deb = HAL_GetTick();
+    if(ms_now_deb - ms_old_deb >= DEBOUNCING_PERIOD){
+      //DEBOUNCING
+      button_debouncing(&b_upshift);
+      button_debouncing(&b_downshift);
+      //button_debouncing(&b_radio);
 
-    print_fifo_status(nRF24_GetStatus_TXFIFO());
+      payload = (b_downshift.debounced_value << SHIFT_DS) |
+                (b_upshift.debounced_value << SHIFT_US) |
+                (b_radio.debounced_value << SHIFT_RADIO);
     
-    HAL_Delay(500);
+
+      //sprintf((char *)buf, "US:%u DS:%u RD:%u Payload:%u\r\n",
+      //        b_upshift.debounced_value,
+      //        b_downshift.debounced_value,
+      //        b_radio.debounced_value,
+      //        payload);
+
+      //HAL_UART_Transmit(&huart2, buf, strlen((char*)buf), 100);
+      nRF24_SendPayload((uint8_t*) &payload, sizeof(payload));
+      ms_old_deb=ms_now_deb;
+    }
+  
+    ms_now_adc = HAL_GetTick();
+
+    if(ms_now_adc - ms_old_adc >= ADC_PERIOD){
+      HAL_ADC_PollForConversion(&hadc,HAL_MAX_DELAY);
+
+      raw_data = HAL_ADC_GetValue(&hadc);
+
+      voltage = (float)raw_data * (float)0.01640625;
+
+      sprintf((char*)buf, "raw value: %d | Value: %f\r\n", raw_data,voltage);
+      HAL_UART_Transmit(&huart2, buf, strlen((char*)buf), 100);
+      ms_old_adc = ms_now_adc;
+    }
 
     /* USER CODE END WHILE */
 
@@ -264,6 +324,62 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief ADC Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC_Init(void)
+{
+
+  /* USER CODE BEGIN ADC_Init 0 */
+
+  /* USER CODE END ADC_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC_Init 1 */
+
+  /* USER CODE END ADC_Init 1 */
+
+  /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
+  */
+  hadc.Instance = ADC1;
+  hadc.Init.OversamplingMode = DISABLE;
+  hadc.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV1;
+  hadc.Init.Resolution = ADC_RESOLUTION_8B;
+  hadc.Init.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+  hadc.Init.ScanConvMode = ADC_SCAN_DIRECTION_FORWARD;
+  hadc.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc.Init.ContinuousConvMode = ENABLE;
+  hadc.Init.DiscontinuousConvMode = DISABLE;
+  hadc.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc.Init.DMAContinuousRequests = DISABLE;
+  hadc.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc.Init.Overrun = ADC_OVR_DATA_PRESERVED;
+  hadc.Init.LowPowerAutoWait = DISABLE;
+  hadc.Init.LowPowerFrequencyMode = ENABLE;
+  hadc.Init.LowPowerAutoPowerOff = DISABLE;
+  if (HAL_ADC_Init(&hadc) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure for the selected ADC regular channel to be converted.
+  */
+  sConfig.Channel = ADC_CHANNEL_0;
+  sConfig.Rank = ADC_RANK_CHANNEL_NUMBER;
+  if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC_Init 2 */
+
+  /* USER CODE END ADC_Init 2 */
+
 }
 
 /**
@@ -368,11 +484,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : B_DOWNSHIFT_Pin */
-  GPIO_InitStruct.Pin = B_DOWNSHIFT_Pin;
+  /*Configure GPIO pins : B_DOWNSHIFT_Pin B_RADIO_Pin */
+  GPIO_InitStruct.Pin = B_DOWNSHIFT_Pin|B_RADIO_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-  HAL_GPIO_Init(B_DOWNSHIFT_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pin : B_UPSHIFT_Pin */
   GPIO_InitStruct.Pin = B_UPSHIFT_Pin;

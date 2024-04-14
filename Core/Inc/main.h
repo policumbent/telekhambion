@@ -95,6 +95,7 @@ void Error_Handler(void);
 #define SHIFT_US 4U
 #define SHIFT_DS 7U
 #define DEBOUNCING_PERIOD 30U   //ms
+#define ADC_PERIOD 500U//ms
 
 /* USER CODE END Private defines */
 

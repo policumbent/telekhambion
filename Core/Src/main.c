@@ -43,6 +43,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+ADC_HandleTypeDef hadc;
+
 SPI_HandleTypeDef hspi1;
 
 UART_HandleTypeDef huart2;
@@ -56,6 +58,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_SPI1_Init(void);
+static void MX_ADC_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -151,8 +154,11 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   MX_SPI1_Init();
-  /* USER CODE BEGIN 2 */
+  //MX_ADC_Init();
 
+  /* USER CODE BEGIN 2 */
+  //HAL_ADCEx_Calibration_Start(&hadc, ADC_SINGLE_ENDED);
+  //HAL_ADC_Start(&hadc);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -161,7 +167,7 @@ int main(void)
   const uint8_t TX_Address[]={0xBB,0xBB,0xBB,0xBB,0xBB};
   
 
-  /*NRF24 SETUP*/
+  /*NRF24 SETUP AND CHECK CONNECTIVITY*/
   HAL_Delay(100);
   nRF24_Init();
   HAL_Delay(100);
@@ -176,7 +182,7 @@ int main(void)
   nRF24_SetOperationalMode(nRF24_MODE_TX);
   nRF24_SetRFChannel(0);
   nRF24_SetTXPower(nRF24_TXPWR_18dBm);
-  nRF24_SetDataRate(nRF24_DR_250kbps);
+  nRF24_SetDataRate(nRF24_DR_1Mbps);
   nRF24_SetAddrWidth(5);
   nRF24_SetAddr(6, TX_Address);
   nRF24_SetAddr(0, TX_Address);
@@ -189,14 +195,21 @@ int main(void)
   HAL_Delay(500);
   
   nRF24_FlushTX();
-    
-  uint8_t buf[35];
+
+  /*VARIABLES DECLARATION*/  
+  uint8_t buf[40];
   uint8_t payload=0;
-  uint32_t ms_old = HAL_GetTick();
-  uint32_t ms_now;
+  uint32_t ms_old_deb = HAL_GetTick();
+  uint32_t ms_now_deb;
+  //uint32_t ms_old_adc = HAL_GetTick();
+  //uint32_t ms_now_adc;
   Button b_upshift;
   Button b_downshift;
   Button b_radio;
+
+  //uint16_t raw_data;
+
+  //float voltage;
 
   //Buttons initialization
   b_downshift.previous = 0;
@@ -224,29 +237,41 @@ int main(void)
 
   while (1)
   { 
-    ms_now = HAL_GetTick();
-    if(ms_now - ms_old >= DEBOUNCING_PERIOD){
+    ms_now_deb = HAL_GetTick();
+    if(ms_now_deb - ms_old_deb >= DEBOUNCING_PERIOD){
       //DEBOUNCING
       button_debouncing(&b_upshift);
       button_debouncing(&b_downshift);
-      button_debouncing(&b_radio);
 
       payload = (b_downshift.debounced_value << SHIFT_DS) |
                 (b_upshift.debounced_value << SHIFT_US) |
                 (b_radio.debounced_value << SHIFT_RADIO);
     
 
-    sprintf((char *)buf, "US:%u DS:%u RD:%u Payload:%u\r\n",
-            b_upshift.debounced_value,
-            b_downshift.debounced_value,
-            b_radio.debounced_value,
-            payload);
-    
-    HAL_UART_Transmit(&huart2, buf, strlen((char*)buf), 100);
-    nRF24_SendPayload((uint8_t*) &payload, sizeof(payload));
-    ms_old=ms_now;
+      //sprintf((char *)buf, "US:%u DS:%u RD:%u Payload:%u\r\n",
+      //        b_upshift.debounced_value,
+      //        b_downshift.debounced_value,
+      //        b_radio.debounced_value,
+      //        payload);
+
+      //HAL_UART_Transmit(&huart2, buf, strlen((char*)buf), 100);
+      nRF24_SendPayload((uint8_t*) &payload, sizeof(payload));
+      ms_old_deb=ms_now_deb;
     }
-    
+  
+    //ms_now_adc = HAL_GetTick();
+
+    //if(ms_now_adc - ms_old_adc >= ADC_PERIOD){
+    //  HAL_ADC_PollForConversion(&hadc,HAL_MAX_DELAY);
+//
+    //  raw_data = HAL_ADC_GetValue(&hadc);
+//
+    //  voltage = (float)raw_data * (float)0.0164;
+//
+    //  sprintf((char*)buf, "raw value: %d | Value: %.2f\r\n", raw_data,voltage);
+    //  HAL_UART_Transmit(&huart2, buf, strlen((char*)buf), 100);
+    //  ms_old_adc = ms_now_adc;
+    //}
 
     /* USER CODE END WHILE */
 
@@ -301,6 +326,62 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief ADC Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC_Init(void)
+{
+
+  /* USER CODE BEGIN ADC_Init 0 */
+
+  /* USER CODE END ADC_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC_Init 1 */
+
+  /* USER CODE END ADC_Init 1 */
+
+  /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
+  */
+  hadc.Instance = ADC1;
+  hadc.Init.OversamplingMode = DISABLE;
+  hadc.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV1;
+  hadc.Init.Resolution = ADC_RESOLUTION_8B;
+  hadc.Init.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+  hadc.Init.ScanConvMode = ADC_SCAN_DIRECTION_FORWARD;
+  hadc.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc.Init.ContinuousConvMode = ENABLE;
+  hadc.Init.DiscontinuousConvMode = DISABLE;
+  hadc.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc.Init.DMAContinuousRequests = DISABLE;
+  hadc.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc.Init.Overrun = ADC_OVR_DATA_PRESERVED;
+  hadc.Init.LowPowerAutoWait = DISABLE;
+  hadc.Init.LowPowerFrequencyMode = ENABLE;
+  hadc.Init.LowPowerAutoPowerOff = DISABLE;
+  if (HAL_ADC_Init(&hadc) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure for the selected ADC regular channel to be converted.
+  */
+  sConfig.Channel = ADC_CHANNEL_0;
+  sConfig.Rank = ADC_RANK_CHANNEL_NUMBER;
+  if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC_Init 2 */
+
+  /* USER CODE END ADC_Init 2 */
+
 }
 
 /**

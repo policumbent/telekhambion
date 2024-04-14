@@ -42,6 +42,8 @@ Core/Src/stm32l0xx_it.c \
 Core/Src/system_stm32l0xx.c \
 Drivers/NRF24/nrf24.c \
 Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal.c \
+Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_adc.c \
+Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_adc_ex.c \
 Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_cortex.c \
 Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_dma.c \
 Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_exti.c \
@@ -174,7 +176,7 @@ LIBDIR = \
 
 
 # Additional LD Flags from config file
-ADDITIONALLDFLAGS = -specs=nano.specs 
+ADDITIONALLDFLAGS = -specs=nano.specs -u _printf_float 
 
 LDFLAGS = $(MCU) $(ADDITIONALLDFLAGS) -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref -Wl,--gc-sections
 
@@ -193,7 +195,6 @@ vpath %.cpp $(sort $(dir $(CPP_SOURCES)))
 OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(C_SOURCES:.c=.o)))
 vpath %.c $(sort $(dir $(C_SOURCES)))
 
-# list of ASM program objects
 # list of ASM program objects
 UPPER_CASE_ASM_SOURCES = $(filter %.S,$(ASM_SOURCES))
 LOWER_CASE_ASM_SOURCES = $(filter %.s,$(ASM_SOURCES))
