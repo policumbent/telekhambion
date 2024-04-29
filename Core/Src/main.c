@@ -104,19 +104,6 @@ void nRF24_SendPayload(uint8_t* data, uint8_t len) {
     return;
 }
 
-void button_debouncing(Button *button){
-  button->current = HAL_GPIO_ReadPin(button->GPIO_Port, button->GPIO_Pin);
-
-  if(button->previous != button->current){
-    button->toggled = 1;
-    button->previous = button->current;
-  }
-  else if(button->toggled){
-    button->toggled = 0;
-    button->debounced_value = button->previous;
-  }
-}
-
 /* USER CODE END 0 */
 
 /**
@@ -192,81 +179,59 @@ int main(void)
   nRF24_FlushTX();
 
   /*VARIABLES DECLARATION*/  
-  uint8_t buf[40];
+  #if DEBUG
+    uint8_t buf[40];
+  #endif /* DEBUG */
+
+  uint8_t send = 0;
   uint8_t payload=0;
-  uint32_t ms_old_deb = HAL_GetTick();
-  uint32_t ms_now_deb;
-  //uint32_t ms_old_adc = HAL_GetTick();
-  //uint32_t ms_now_adc;
-  Button b_upshift;
-  Button b_downshift;
-  Button b_radio;
 
-  //uint16_t raw_data;
+  #if ADC_ON
+    uint32_t ms_old_adc = HAL_GetTick();
+    uint32_t ms_now_adc;
 
-  //float voltage;
+    uint16_t raw_data;
 
-  //Buttons initialization
-  b_downshift.previous = 0;
-  b_downshift.current = 0;
-  b_downshift.toggled = 0;
-  b_downshift.debounced_value = 0;
-  b_downshift.GPIO_Port = B_DOWNSHIFT_GPIO_Port;
-  b_downshift.GPIO_Pin = B_DOWNSHIFT_Pin;
-
-  b_upshift.previous = 0;
-  b_upshift.current = 0;
-  b_upshift.toggled = 0;
-  b_upshift.debounced_value = 0;
-  b_upshift.GPIO_Port = B_UPSHIFT_GPIO_Port;
-  b_upshift.GPIO_Pin = B_UPSHIFT_Pin;
-
-  b_radio.previous = 0;
-  b_radio.current = 0;
-  b_radio.toggled = 0;
-  b_radio.debounced_value = 0;
-  b_radio.GPIO_Port = B_RADIO_GPIO_Port;
-  b_radio.GPIO_Pin = B_RADIO_Pin;
+    float voltage;
+  #endif /* ADC_ON*/
+  
+  controller_button_init();
 
   HAL_Delay(1000);
 
   while (1)
-  { 
-    ms_now_deb = HAL_GetTick();
-    if(ms_now_deb - ms_old_deb >= DEBOUNCING_PERIOD){
-      //DEBOUNCING
-      button_debouncing(&b_upshift);
-      button_debouncing(&b_downshift);
-
-      payload = (b_downshift.debounced_value << SHIFT_DS) |
-                (b_upshift.debounced_value << SHIFT_US) |
-                (b_radio.debounced_value << SHIFT_RADIO);
-    
-
-      //sprintf((char *)buf, "US:%u DS:%u RD:%u Payload:%u\r\n",
-      //        b_upshift.debounced_value,
-      //        b_downshift.debounced_value,
-      //        b_radio.debounced_value,
-      //        payload);
-
-      //HAL_UART_Transmit(&huart2, buf, strlen((char*)buf), 100);
+  {
+    send = controller_encode_payload(&payload);
+    if (send) {
       nRF24_SendPayload((uint8_t*) &payload, sizeof(payload));
-      ms_old_deb=ms_now_deb;
     }
-  
-    //ms_now_adc = HAL_GetTick();
 
-    //if(ms_now_adc - ms_old_adc >= ADC_PERIOD){
-    //  HAL_ADC_PollForConversion(&hadc,HAL_MAX_DELAY);
-//
-    //  raw_data = HAL_ADC_GetValue(&hadc);
-//
-    //  voltage = (float)raw_data * (float)0.0164;
-//
-    //  sprintf((char*)buf, "raw value: %d | Value: %.2f\r\n", raw_data,voltage);
-    //  HAL_UART_Transmit(&huart2, buf, strlen((char*)buf), 100);
-    //  ms_old_adc = ms_now_adc;
-    //}
+    #if DEBUG
+      sprintf((char *)buf, "US:%u DS:%u RD:%u Payload:%u\r\n",
+              b_upshift.debounced_value,
+              b_downshift.debounced_value,
+              b_radio.debounced_value,
+              payload);
+      HAL_UART_Transmit(&huart2, buf, strlen((char*)buf), 100);
+    #endif /* DEBUG */
+
+    #if ADC_ON
+      ms_now_adc = HAL_GetTick();
+
+      if(ms_now_adc - ms_old_adc >= ADC_PERIOD){
+        HAL_ADC_PollForConversion(&hadc,HAL_MAX_DELAY);
+
+        raw_data = HAL_ADC_GetValue(&hadc);
+
+        voltage = (float)raw_data * (float)0.0164;
+
+        #if DEBUG
+          sprintf((char*)buf, "raw value: %d | Value: %.2f\r\n", raw_data,voltage);
+          HAL_UART_Transmit(&huart2, buf, strlen((char*)buf), 100);
+        #endif /* DEBUG */
+        ms_old_adc = ms_now_adc;
+      }
+    #endif /* ADC_ON */
 
     /* USER CODE END WHILE */
 

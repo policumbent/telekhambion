@@ -31,28 +31,13 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "telekhambion.h"
+#include "settings.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 
-/*Button: struct that describes pin state for debouncing
-  -previous: contains previous pin state
-  -current:  contains current pin state
-  -toggled:  set if previous read captured a transition
-  -debounced_value: final value after debouncing
-  -GPIO_Port
-  -GPIO_Pin
-*/
-typedef struct button_struct{
-  uint8_t previous;
-  uint8_t current;
-  uint8_t toggled;
-  uint8_t debounced_value;
-  GPIO_TypeDef *GPIO_Port;
-  uint16_t GPIO_Pin;
-} Button;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -91,11 +76,7 @@ void Error_Handler(void);
 #define B_RADIO_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
-#define SHIFT_RADIO 0U
-#define SHIFT_US 4U
-#define SHIFT_DS 7U
-#define DEBOUNCING_PERIOD 30U   //ms
-#define ADC_PERIOD 500U//ms
+#define ADC_PERIOD 500U //ms
 
 /* USER CODE END Private defines */
 
