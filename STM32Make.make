@@ -36,10 +36,14 @@ BUILD_DIR = build
 ######################################
 # C sources
 C_SOURCES =  \
+Core/Src/adc.c \
+Core/Src/gpio.c \
 Core/Src/main.c \
+Core/Src/spi.c \
 Core/Src/stm32l0xx_hal_msp.c \
 Core/Src/stm32l0xx_it.c \
 Core/Src/system_stm32l0xx.c \
+Core/Src/usart.c \
 Drivers/NRF24/nrf24.c \
 Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal.c \
 Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_adc.c \
