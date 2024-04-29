@@ -44,9 +44,9 @@ uint8_t controller_encode_payload(uint8_t *payload) {
 
     but_last_time_ms = but_curr_time_ms;
 
-    *payload = (downshift_pressed << DOWNSHIFT_MASK ||
-                upshift_pressed << UPSHIFT_MASK ||
-                radio_pressed << RADIO_MASK);
+    *payload = ((downshift_pressed << DOWNSHIFT_MASK) |
+                (upshift_pressed << UPSHIFT_MASK) |
+                (radio_pressed << RADIO_MASK));
 
     return 1;
 }
