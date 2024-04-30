@@ -9,6 +9,9 @@ button_t but_upshift;
 button_t but_radio;
 
 
+uint8_t text_buf[40];
+
+
 static void button_val_init(button_t *button, GPIO_TypeDef *port, uint16_t pin);
 static uint8_t button_update_val(button_t *button);
 
@@ -42,11 +45,17 @@ uint8_t controller_encode_payload(uint8_t *payload) {
     uint8_t upshift_pressed = button_update_val(&but_upshift);
     uint8_t radio_pressed = button_update_val(&but_radio);
 
+    #if DEBUG
+        sprintf((char *)text_buf, "DS: %d; US: %d; RA: %d\r\n",
+                downshift_pressed, upshift_pressed, radio_pressed);
+        HAL_UART_Transmit(&huart2, text_buf, strlen((char *)text_buf), 100);
+    #endif /* DEBUG */
+
     but_last_time_ms = but_curr_time_ms;
 
-    *payload = ((downshift_pressed << DOWNSHIFT_MASK) |
-                (upshift_pressed << UPSHIFT_MASK) |
-                (radio_pressed << RADIO_MASK));
+    (*payload) = ((downshift_pressed << DOWNSHIFT_MASK) |
+                  (upshift_pressed << UPSHIFT_MASK) |
+                  (radio_pressed << RADIO_MASK));
 
     return 1;
 }

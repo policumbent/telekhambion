@@ -56,53 +56,13 @@
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 
+void print_fifo_status(uint8_t flag);
+void nRF24_SendPayload(uint8_t *data, uint8_t len);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
-void print_fifo_status(uint8_t flag){
-  switch(flag){
-    case nRF24_STATUS_TXFIFO_EMPTY:
-      HAL_UART_Transmit(&huart2,(uint8_t*) "EMPTYFIFO\r\n", sizeof("EMPTYFIFO\r\n"), 500);
-      break;
-    case nRF24_STATUS_TXFIFO_DATA:
-      HAL_UART_Transmit(&huart2,(uint8_t*) "DATAFIFO\r\n", sizeof("DATAFIFO\r\n"), 500);
-      break;
-    case nRF24_STATUS_TXFIFO_FULL:
-      HAL_UART_Transmit(&huart2,(uint8_t*) "FULLFIFO\r\n", sizeof("FULLFIFO\r\n"), 500);
-      break;
-    case nRF24_STATUS_TXFIFO_ERROR:
-      HAL_UART_Transmit(&huart2,(uint8_t*) "ERRORFIFO\r\n", sizeof("ERRORFIFO\r\n"), 500);
-      break;    
-  }
-}
-
-void nRF24_SendPayload(uint8_t* data, uint8_t len) {
-    uint8_t flag;
-
-    //Set CE pin low in order to force nRF state in Standby-I
-    nRF24_CE_L();
-
-    
-    //Write data on nRF24 register
-    nRF24_WritePayload(data, len);
-
-    
-    //Set CE Pin High in order to trigger the transmission
-    nRF24_CE_H();
-    HAL_Delay(5);
-    //Wait for empy fifo
-    do{
-      flag=nRF24_GetStatus_TXFIFO();
-      
-    }while((flag != nRF24_STATUS_RXFIFO_EMPTY));
-
-    //Set CE Low 
-    nRF24_CE_L();
-    
-    return;
-}
 
 /* USER CODE END 0 */
 
@@ -154,12 +114,15 @@ int main(void)
   nRF24_Init();
   HAL_Delay(100);
   while(nRF24_Check() == 0){
-    HAL_UART_Transmit(&huart2,(uint8_t*) "invalid\r\n",sizeof("invalid\r\n"),500);
-    HAL_Delay(1000);
+    #if DEBUG
+      HAL_UART_Transmit(&huart2,(uint8_t*) "invalid\r\n",sizeof("invalid\r\n"),500);
+      HAL_Delay(1000);
+    #endif /* DEBUG */
   }
   
-  HAL_UART_Transmit(&huart2,(uint8_t*) "NRF connected\r\n",sizeof("NRF connected\r\n"),500);
-
+  #if DEBUG
+    HAL_UART_Transmit(&huart2,(uint8_t*) "NRF connected\r\n",sizeof("NRF connected\r\n"),500);
+  #endif /* DEBUG */
 
   nRF24_SetOperationalMode(nRF24_MODE_TX);
   nRF24_SetRFChannel(0);
@@ -205,15 +168,6 @@ int main(void)
     if (send) {
       nRF24_SendPayload((uint8_t*) &payload, sizeof(payload));
     }
-
-    #if DEBUG
-      sprintf((char *)buf, "US:%u DS:%u RD:%u Payload:%u\r\n",
-              b_upshift.debounced_value,
-              b_downshift.debounced_value,
-              b_radio.debounced_value,
-              payload);
-      HAL_UART_Transmit(&huart2, buf, strlen((char*)buf), 100);
-    #endif /* DEBUG */
 
     #if ADC_ON
       ms_now_adc = HAL_GetTick();
@@ -289,6 +243,55 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+/**
+ * @brief low level nRF fifo check: not used anymore, but can be useful in case
+ * of code modifications if some error occurs
+ */
+void print_fifo_status(uint8_t flag){
+  switch(flag){
+    case nRF24_STATUS_TXFIFO_EMPTY:
+      HAL_UART_Transmit(&huart2,(uint8_t*) "EMPTYFIFO\r\n", sizeof("EMPTYFIFO\r\n"), 500);
+      break;
+    case nRF24_STATUS_TXFIFO_DATA:
+      HAL_UART_Transmit(&huart2,(uint8_t*) "DATAFIFO\r\n", sizeof("DATAFIFO\r\n"), 500);
+      break;
+    case nRF24_STATUS_TXFIFO_FULL:
+      HAL_UART_Transmit(&huart2,(uint8_t*) "FULLFIFO\r\n", sizeof("FULLFIFO\r\n"), 500);
+      break;
+    case nRF24_STATUS_TXFIFO_ERROR:
+      HAL_UART_Transmit(&huart2,(uint8_t*) "ERRORFIFO\r\n", sizeof("ERRORFIFO\r\n"), 500);
+      break;    
+  }
+}
+
+/**
+ * @brief send payload through nRF
+ * @param data uint8_t payload to send
+ * @param len payload's length
+ */
+void nRF24_SendPayload(uint8_t* data, uint8_t len) {
+    uint8_t flag;
+
+    //Set CE pin low in order to force nRF state in Standby-I
+    nRF24_CE_L();
+    
+    //Write data on nRF24 register
+    nRF24_WritePayload(data, len);
+    
+    //Set CE Pin High in order to trigger the transmission
+    nRF24_CE_H();
+    HAL_Delay(5);
+    //Wait for empy fifo
+    do {
+      flag=nRF24_GetStatus_TXFIFO();
+    } while (flag != nRF24_STATUS_RXFIFO_EMPTY);
+
+    //Set CE Low 
+    nRF24_CE_L();
+    
+    return;
+}
 
 /* USER CODE END 4 */
 

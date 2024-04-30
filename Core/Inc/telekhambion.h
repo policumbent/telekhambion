@@ -3,6 +3,7 @@
 
 
 #include "main.h"
+#include "usart.h"
 
 
 #define BUTTON_POLLING_PERIOD 50u
