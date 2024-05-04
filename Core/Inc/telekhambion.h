@@ -26,8 +26,8 @@ typedef struct {
 } button_t;
 
 
-void controller_button_init();
-uint8_t controller_encode_payload(uint8_t *update);
+void telekhambion_button_init();
+uint8_t telekhambion_encode_payload(uint8_t *update);
 
 
 #endif /* __TELEKHAMBION_H__ */

@@ -155,13 +155,13 @@ int main(void)
     float voltage;
   #endif /* ADC_ON*/
   
-  controller_button_init();
+  telekhambion_button_init();
 
   HAL_Delay(1000);
 
   while (1)
   {
-    send = controller_encode_payload(&payload);
+    send = telekhambion_encode_payload(&payload);
     if (send) {
       nRF24_SendPayload((uint8_t*) &payload, sizeof(payload));
     }

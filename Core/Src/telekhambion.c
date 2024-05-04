@@ -18,7 +18,7 @@ static uint8_t button_update_val(button_t *button);
 /**
  * @brief Initializes buttons
  */
-void controller_button_init() {
+void telekhambion_button_init() {
     button_val_init(&but_downshift, B_DOWNSHIFT_GPIO_Port, B_DOWNSHIFT_Pin);
     button_val_init(&but_upshift, B_UPSHIFT_GPIO_Port, B_UPSHIFT_Pin);
     button_val_init(&but_radio, B_RADIO_GPIO_Port, B_RADIO_Pin);
@@ -33,7 +33,7 @@ void controller_button_init() {
  * has to be sent
  * @retval 1 if data has to be send; 0 otherwise
  */
-uint8_t controller_encode_payload(uint8_t *payload) {
+uint8_t telekhambion_encode_payload(uint8_t *payload) {
     but_curr_time_ms = HAL_GetTick();
     *payload = 0;
 
