@@ -33,6 +33,10 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 #include "telekhambion.h"
 #include "settings.h"
+
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

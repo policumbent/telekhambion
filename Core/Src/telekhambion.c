@@ -1,8 +1,8 @@
 #include "telekhambion.h"
 
 
-uint32_t but_last_time_ms;
-uint32_t but_curr_time_ms;
+uint32_t but_last_time_ms = 0;
+uint32_t but_curr_time_ms = 0;
 
 button_t but_downshift;
 button_t but_upshift;
@@ -37,7 +37,7 @@ uint8_t controller_encode_payload(uint8_t *payload) {
     but_curr_time_ms = HAL_GetTick();
     *payload = 0;
 
-    if (but_curr_time_ms - but_last_time_ms >= BUTTON_POLLING_PERIOD) {
+    if (but_curr_time_ms - but_last_time_ms < BUTTON_POLLING_PERIOD) {
         return 0;
     }
 
